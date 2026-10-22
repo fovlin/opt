@@ -191,7 +191,7 @@ func initArgs() error {
 			for n, subArg := range arg {
 				value, ok := Options["-"+string(subArg)]
 				if !ok {
-					return fmt.Errorf("unknown option: %v", arg)
+					return fmt.Errorf("unknown option: %v", "-"+arg)
 				}
 				if n == len(arg)-1 && value.NextIsOption() {
 					nextIsOption = true
