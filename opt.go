@@ -54,6 +54,9 @@ func StringVar(v *string, shortName string, longName string, defaultValue string
 }
 
 func ShortStringVar(v *string, name string, defaultValue string) {
+	if len(name) != 1 {
+		panic("short name length must be 1")
+	}
 	*v = defaultValue
 	Options["-"+name] = StringFlag{
 		NextOption: true,
@@ -78,14 +81,17 @@ func BoolSwitch(v *bool, shortName string, longName string) {
 	}
 }
 
-func LongBoolSwitch(v *bool, name string) {
-	Options["--"+name] = BoolFlag{
+func ShortBoolSwitch(v *bool, name string) {
+	if len(name) != 1 {
+		panic("short name length must be 1")
+	}
+	Options["-"+name] = BoolFlag{
 		Value: v,
 	}
 }
 
-func ShortBoolSwitch(v *bool, name string) {
-	Options["-"+name] = BoolFlag{
+func LongBoolSwitch(v *bool, name string) {
+	Options["--"+name] = BoolFlag{
 		Value: v,
 	}
 }
