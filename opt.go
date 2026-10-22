@@ -1,6 +1,7 @@
 package opt
 
 import (
+	"fmt"
 	"os"
 	"strings"
 )
@@ -9,6 +10,7 @@ var (
 	Options = make(map[string]Value)
 	allArgs []string
 	Args []string
+	funcList []func()
 )
 
 type Value interface {
@@ -43,8 +45,12 @@ func (boolValue BoolFlag) NextIsOption() bool {
 }
 
 func StringVar(v *string, shortName string, longName string, defaultValue string) {
-	ShortStringVar(v, shortName, defaultValue)
-	LongStringVar(v, longName, defaultValue)
+	if len(shortName) != 0 {
+		ShortStringVar(v, shortName, defaultValue)
+	}
+	if len(longName) != 0 {
+		LongStringVar(v, longName, defaultValue)
+	}
 }
 
 func ShortStringVar(v *string, name string, defaultValue string) {
@@ -64,8 +70,12 @@ func LongStringVar(v *string, name string, defaultValue string) {
 }
 
 func BoolSwitch(v *bool, shortName string, longName string) {
-	ShortBoolSwitch(v, shortName)
-	LongBoolSwitch(v, longName)
+	if len(shortName) != 0 {
+		ShortBoolSwitch(v, shortName)
+	}
+	if len(longName) != 0 {
+		LongBoolSwitch(v, longName)
+	}
 }
 
 func LongBoolSwitch(v *bool, name string) {
@@ -80,12 +90,36 @@ func ShortBoolSwitch(v *bool, name string) {
 	}
 }
 
-func Parse() {
-	initArgs()
+func BoolFunc(shortName string, longName string, function func()) {
+	var boolValue bool
+	if shortName != "" {
+		ShortBoolSwitch(&boolValue, shortName)
+	}
+	if longName != "" {
+		LongBoolSwitch(&boolValue, longName)
+	}
+
+	funcList = append(funcList, func() {
+		if boolValue {
+			function()
+		}
+	})
+}
+
+func Parse() error {
+	err := initArgs()
+	if err != nil {
+		return err
+	}
 	scan()
+	for _, function := range funcList {
+		function()
+	}
+	return nil
 }
 
 func scan() {
+	clear(Args)
 	var nextValue Value
 	if len(os.Args) < 2 {
 		return
@@ -110,14 +144,15 @@ func scan() {
 	}
 }
 
-func initArgs() {
+func initArgs() error {
 	for _, arg := range os.Args[1:] {
-		if strings.HasPrefix(arg, "-") && strings.ContainsRune(arg, '=') {
+		switch true {
+		case strings.HasPrefix(arg, "-") && strings.ContainsRune(arg, '='):
 			fields := strings.SplitN(arg, "=", 2)
 			value, ok := Options[fields[0]]
 			switch true {
 			case !ok:
-				continue
+				return fmt.Errorf("unknown option: %v", arg)
 
 			case value.NextIsOption():
 				allArgs = append(allArgs, fields...)
@@ -125,7 +160,20 @@ func initArgs() {
 			default:
 				allArgs = append(allArgs, fields[0])
 			}
+
+		case strings.HasPrefix(arg, "-"):
+			_, ok := Options[arg]
+			if !ok {
+				return fmt.Errorf("unknown option: %v", arg)
+			}
+			allArgs = append(allArgs, arg)
+
+		default:
+			allArgs = append(allArgs, arg)
+
 		}
-		allArgs = append(allArgs, arg)
+
 	}
+
+	return nil
 }
