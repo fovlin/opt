@@ -16,29 +16,29 @@ type Value interface {
 	SetValue(string)
 }
 
-type StringValue struct {
+type StringFlag struct {
 	NextOption bool
-	Pointer *string
+	Value *string
 }
 
-type BoolValue struct {
+type BoolFlag struct {
 	NextOption bool
-	Pointer *bool
+	Value *bool
 }
 
-func (stringValue StringValue) SetValue(arg string) {
-	*stringValue.Pointer = arg
+func (stringValue StringFlag) SetValue(arg string) {
+	*stringValue.Value = arg
 }
 
-func (boolValue BoolValue) SetValue(arg string) {
-	*boolValue.Pointer = true
+func (boolValue BoolFlag) SetValue(arg string) {
+	*boolValue.Value = true
 }
 
-func (stringValue StringValue) NextIsOption() bool {
+func (stringValue StringFlag) NextIsOption() bool {
 	return stringValue.NextOption
 }
 
-func (boolValue BoolValue) NextIsOption() bool {
+func (boolValue BoolFlag) NextIsOption() bool {
 	return boolValue.NextOption
 }
 
@@ -49,34 +49,34 @@ func StringVar(v *string, shortName string, longName string, defaultValue string
 
 func ShortStringVar(v *string, name string, defaultValue string) {
 	*v = defaultValue
-	Options["-"+name] = StringValue{
+	Options["-"+name] = StringFlag{
 		NextOption: true,
-		Pointer: v,
+		Value: v,
 	}
 }
 
 func LongStringVar(v *string, name string, defaultValue string) {
 	*v = defaultValue
-	Options["--"+name] = StringValue{
+	Options["--"+name] = StringFlag{
 		NextOption: true,
-		Pointer: v,
+		Value: v,
 	}
 }
 
-func BoolVar(v *bool, shortName string, longName string) {
+func BoolSwitch(v *bool, shortName string, longName string) {
 	ShortBoolSwitch(v, shortName)
 	LongBoolSwitch(v, longName)
 }
 
 func LongBoolSwitch(v *bool, name string) {
-	Options["--"+name] = BoolValue{
-		Pointer: v,
+	Options["--"+name] = BoolFlag{
+		Value: v,
 	}
 }
 
 func ShortBoolSwitch(v *bool, name string) {
-	Options["-"+name] = BoolValue{
-		Pointer: v,
+	Options["-"+name] = BoolFlag{
+		Value: v,
 	}
 }
 
@@ -101,7 +101,7 @@ func scan() {
 			var ok bool
 			nextValue, ok = Options[arg]
 			if ok && !nextValue.NextIsOption() {
-				nextValue.SetValue(arg)
+				nextValue.SetValue("")
 			}
 
 		default:
