@@ -147,7 +147,7 @@ func scan() {
 func initArgs() error {
 	for _, arg := range os.Args[1:] {
 		switch true {
-		case strings.HasPrefix(arg, "-") && strings.ContainsRune(arg, '='):
+		case strings.HasPrefix(arg, "--") && strings.ContainsRune(arg, '='):
 			fields := strings.SplitN(arg, "=", 2)
 			value, ok := Options[fields[0]]
 			switch true {
@@ -161,12 +161,18 @@ func initArgs() error {
 				allArgs = append(allArgs, fields[0])
 			}
 
-		case strings.HasPrefix(arg, "-"):
+		case strings.HasPrefix(arg, "--"):
 			_, ok := Options[arg]
 			if !ok {
 				return fmt.Errorf("unknown option: %v", arg)
 			}
 			allArgs = append(allArgs, arg)
+
+		case strings.HasPrefix(arg, "-"):
+			arg, _ = strings.CutPrefix(arg, "-")
+			for _, subArg := range arg {
+				allArgs = append(allArgs, "-"+string(subArg))
+			}
 
 		default:
 			allArgs = append(allArgs, arg)
