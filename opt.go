@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	null string = ""
-	Options  = make(map[string]Value)
+	null     string = ""
+	Options         = make(map[string]Value)
 	args     []string
 	funcList []func()
 )
@@ -57,10 +57,10 @@ func ShortStringVar(v *string, name string, defaultValue string) {
 	if len(name) != 1 {
 		panic("the length of the short parameter name must be equal to 1")
 	}
-	name = "-"+name
+	name = "-" + name
 	_, ok := Options[name]
 	if ok {
-		panic("duplicate registration parameter: "+name)
+		panic("duplicate registration parameter: " + name)
 	}
 	*v = defaultValue
 	Options[name] = StringFlag{
@@ -73,10 +73,10 @@ func LongStringVar(v *string, name string, defaultValue string) {
 	if len(name) == 0 {
 		panic("the length of the long parameter name must be greater than 0")
 	}
-	name = "--"+name
+	name = "--" + name
 	_, ok := Options[name]
 	if ok {
-		panic("duplicate registration parameter: "+name)
+		panic("duplicate registration parameter: " + name)
 	}
 	*v = defaultValue
 	Options[name] = StringFlag{
@@ -98,10 +98,10 @@ func ShortBoolSwitch(v *bool, name string) {
 	if len(name) != 1 {
 		panic("the length of the short parameter name must be equal to 1")
 	}
-	name = "-"+name
+	name = "-" + name
 	_, ok := Options[name]
 	if ok {
-		panic("duplicate registration parameter: "+name)
+		panic("duplicate registration parameter: " + name)
 	}
 	Options[name] = BoolFlag{
 		Value: v,
@@ -112,10 +112,10 @@ func LongBoolSwitch(v *bool, name string) {
 	if len(name) == 0 {
 		panic("the length of the long parameter name must be greater than 0")
 	}
-	name = "--"+name
+	name = "--" + name
 	_, ok := Options[name]
 	if ok {
-		panic("duplicate registration parameter: "+name)
+		panic("duplicate registration parameter: " + name)
 	}
 	Options[name] = BoolFlag{
 		Value: v,
@@ -159,7 +159,7 @@ func Parse() error {
 	}
 
 	funcList = nil
-	Options  = make(map[string]Value)
+	Options = make(map[string]Value)
 	return nil
 }
 
@@ -197,7 +197,7 @@ func scan() error {
 
 			case value.NextIsOption():
 				lastValue = value
-				
+
 			default:
 				value.SetValue(null)
 			}
@@ -210,7 +210,7 @@ func scan() error {
 				case !ok:
 					return fmt.Errorf("unknown option: %v", arg)
 
-				case n == len(arg) && value.NextIsOption():
+				case n == len(arg)-1 && value.NextIsOption():
 					lastValue = value
 
 				default:
