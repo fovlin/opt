@@ -7,9 +7,9 @@ import (
 )
 
 var (
+	null string = ""
 	Options  = make(map[string]Value)
-	allArgs  []string
-	Args     []string
+	args     []string
 	funcList []func()
 )
 
@@ -147,55 +147,33 @@ func LongBoolFunc(longName string, function func()) {
 }
 
 func Parse() error {
-	Args = nil
+	args = nil
 
-	err := initArgs()
+	err := scan()
 	if err != nil {
 		return err
 	}
-	scan()
+
 	for _, function := range funcList {
 		function()
 	}
 
-	allArgs = nil
 	funcList = nil
 	Options  = make(map[string]Value)
 	return nil
 }
 
-func scan() {
-	var nextValue Value
-	if len(os.Args) < 2 {
-		return
-	}
-
-	for _, arg := range allArgs {
-		switch true {
-		case nextValue != nil && nextValue.NextIsOption():
-			nextValue.SetValue(arg)
-			nextValue = nil
-
-		case strings.HasPrefix(arg, "-"):
-			var ok bool
-			nextValue, ok = Options[arg]
-			if ok && !nextValue.NextIsOption() {
-				nextValue.SetValue("")
-			}
-
-		default:
-			Args = append(Args, arg)
-		}
-	}
+func Args() []string {
+	return args
 }
 
-func initArgs() error {
-	var nextIsOption bool
+func scan() error {
+	var lastValue Value
 	for _, arg := range os.Args[1:] {
 		switch true {
-		case nextIsOption:
-			nextIsOption = false
-			allArgs = append(allArgs, arg)
+		case lastValue != nil && lastValue.NextIsOption():
+			lastValue = nil
+			args = append(args, arg)
 
 		case strings.HasPrefix(arg, "--") && strings.ContainsRune(arg, '='):
 			fields := strings.SplitN(arg, "=", 2)
@@ -205,37 +183,43 @@ func initArgs() error {
 				return fmt.Errorf("unknown option: %v", arg)
 
 			case value.NextIsOption():
-				allArgs = append(allArgs, fields[0], fields[1])
+				value.SetValue(fields[1])
 
 			default:
-				allArgs = append(allArgs, fields[0])
+				value.SetValue(null)
 			}
 
 		case strings.HasPrefix(arg, "--"):
 			value, ok := Options[arg]
-			if !ok {
+			switch true {
+			case !ok:
 				return fmt.Errorf("unknown option: %v", arg)
-			}
-			allArgs = append(allArgs, arg)
-			if value.NextIsOption() {
-				nextIsOption = true
+
+			case value.NextIsOption():
+				lastValue = value
+				
+			default:
+				value.SetValue(null)
 			}
 
 		case strings.HasPrefix(arg, "-"):
 			arg, _ = strings.CutPrefix(arg, "-")
 			for n, subArg := range arg {
 				value, ok := Options["-"+string(subArg)]
-				if !ok {
-					return fmt.Errorf("unknown option: %v", "-"+string(subArg))
+				switch true {
+				case !ok:
+					return fmt.Errorf("unknown option: %v", arg)
+
+				case n == len(arg) && value.NextIsOption():
+					lastValue = value
+
+				default:
+					value.SetValue(null)
 				}
-				if n == len(arg)-1 && value.NextIsOption() {
-					nextIsOption = true
-				}
-				allArgs = append(allArgs, "-"+string(subArg))
 			}
 
 		default:
-			allArgs = append(allArgs, arg)
+			args = append(args, arg)
 
 		}
 	}
