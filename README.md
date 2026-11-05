@@ -16,7 +16,7 @@ The standard `flag` package follows a `-flag value` convention that feels awkwar
 ## Install
 
 ```bash
-go get acovia.net/opt
+go get github.com/fovlin/raes
 ```
 
 > If you want to reference this repository directly, the module path in `go.mod` is `opt`; use a local `replace` directive.
